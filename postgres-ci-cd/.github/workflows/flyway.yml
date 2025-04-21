@@ -1,0 +1,29 @@
+name: Deploy PostgreSQL Stored Procedures
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  migrate:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Show file structure (for debug)
+        run: tree
+
+      - name: Run Flyway Migrations via Docker
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/sql:/flyway/sql \
+            flyway/flyway:latest \
+            -url=jdbc:postgresql://${{ secrets.PGHOST }}:5432/${{ secrets.PGDB }} \
+            -user=${{ secrets.PGUSER }} \
+            -password=${{ secrets.PGPASSWORD }} \
+            migrate
